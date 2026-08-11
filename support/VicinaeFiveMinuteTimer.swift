@@ -1,53 +1,152 @@
 import AppKit
 import Foundation
 
-let stateFile = NSString(string: "~/Library/Application Support/Vicinae/five-minute-timer.end").expandingTildeInPath
+let stateDirectory = NSString(string: "~/Library/Application Support/Vicinae").expandingTildeInPath
+let endFile = (stateDirectory as NSString).appendingPathComponent("five-minute-timer.end")
+let pausedFile = (stateDirectory as NSString).appendingPathComponent("five-minute-timer.paused")
 
-func timerEnd() -> Int64? {
-    guard let contents = try? String(contentsOfFile: stateFile, encoding: .utf8) else {
-        return nil
-    }
+func now() -> Int64 { Int64(Date().timeIntervalSince1970) }
 
+func readInteger(_ path: String) -> Int64? {
+    guard let contents = try? String(contentsOfFile: path, encoding: .utf8) else { return nil }
     return Int64(contents.trimmingCharacters(in: .whitespacesAndNewlines))
 }
 
+func writeInteger(_ value: Int64, to path: String) {
+    try? FileManager.default.createDirectory(atPath: stateDirectory, withIntermediateDirectories: true)
+    try? String(value).write(toFile: path, atomically: true, encoding: .utf8)
+}
+
+func removeFile(_ path: String) { try? FileManager.default.removeItem(atPath: path) }
+
 func formattedTime(_ seconds: Int64) -> String {
-    let minutes = seconds / 60
-    let remainingSeconds = seconds % 60
-    return String(format: "%02lld:%02lld", minutes, remainingSeconds)
+    let safeSeconds = max(0, seconds)
+    return String(format: "%02lld:%02lld", safeSeconds / 60, safeSeconds % 60)
+}
+
+func pausedRemaining() -> Int64? {
+    guard let remaining = readInteger(pausedFile) else { return nil }
+    return max(0, remaining)
+}
+
+func activeRemaining() -> Int64? {
+    guard let end = readInteger(endFile) else { return nil }
+    return max(0, end - now())
+}
+
+final class TimerMenuController: NSObject {
+    let statusItem: NSStatusItem
+    let pauseItem: NSMenuItem
+
+    init(statusItem: NSStatusItem) {
+        self.statusItem = statusItem
+        self.pauseItem = NSMenuItem(title: "Pause", action: nil, keyEquivalent: "")
+        super.init()
+
+        let menu = NSMenu()
+        menu.addItem(makeItem("− 1 minute", action: #selector(subtractMinute)))
+        menu.addItem(makeItem("+ 5 minutes", action: #selector(addFiveMinutes)))
+        menu.addItem(.separator())
+        pauseItem.action = #selector(togglePause)
+        pauseItem.target = self
+        menu.addItem(pauseItem)
+        menu.addItem(makeItem("Reset timer", action: #selector(resetTimer)))
+        menu.addItem(.separator())
+        menu.addItem(makeItem("Quit timer", action: #selector(quitTimer)))
+        statusItem.menu = menu
+    }
+
+    func makeItem(_ title: String, action: Selector) -> NSMenuItem {
+        let item = NSMenuItem(title: title, action: action, keyEquivalent: "")
+        item.target = self
+        return item
+    }
+
+    func refresh() {
+        if let paused = pausedRemaining() {
+            statusItem.button?.title = "⏸ \(formattedTime(paused))"
+            pauseItem.title = "Resume"
+        } else if let remaining = activeRemaining(), remaining > 0 {
+            statusItem.button?.title = formattedTime(remaining)
+            pauseItem.title = "Pause"
+        } else {
+            statusItem.button?.title = "—"
+            pauseItem.title = "Pause"
+        }
+    }
+
+    @objc func subtractMinute() {
+        if let paused = pausedRemaining() {
+            if paused <= 60 { removeFile(pausedFile) }
+            else { writeInteger(paused - 60, to: pausedFile) }
+        } else if let end = readInteger(endFile) {
+            if end <= now() + 60 { removeFile(endFile) }
+            else { writeInteger(end - 60, to: endFile) }
+        }
+        refresh()
+    }
+
+    @objc func addFiveMinutes() {
+        if let paused = pausedRemaining() { writeInteger(paused + 300, to: pausedFile) }
+        else {
+            let baseEnd = max(now(), readInteger(endFile) ?? now())
+            writeInteger(baseEnd + 300, to: endFile)
+        }
+        refresh()
+    }
+
+    @objc func togglePause() {
+        if let paused = pausedRemaining() {
+            writeInteger(now() + paused, to: endFile)
+            removeFile(pausedFile)
+        } else if let remaining = activeRemaining(), remaining > 0 {
+            writeInteger(remaining, to: pausedFile)
+            removeFile(endFile)
+        }
+        refresh()
+    }
+
+    @objc func resetTimer() {
+        removeFile(endFile)
+        removeFile(pausedFile)
+        refresh()
+    }
+
+    @objc func quitTimer() {
+        removeFile(endFile)
+        removeFile(pausedFile)
+        NSApplication.shared.terminate(nil)
+    }
 }
 
 let application = NSApplication.shared
 application.setActivationPolicy(.accessory)
-
 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
-
+let controller = TimerMenuController(statusItem: statusItem)
 var finished = false
 
 Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
-    let now = Int64(Date().timeIntervalSince1970)
-
-    guard let end = timerEnd() else {
-        statusItem.button?.title = ""
+    if pausedRemaining() != nil {
+        finished = false
+        controller.refresh()
         return
     }
-
-    let remaining = end - now
-    if remaining > 0 {
-        finished = false
-        statusItem.button?.title = formattedTime(remaining)
-    } else if !finished {
-        finished = true
-        statusItem.button?.title = "✓"
-
-        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-            let currentTime = Int64(Date().timeIntervalSince1970)
-            if let currentEnd = timerEnd(), currentEnd <= currentTime {
-                try? FileManager.default.removeItem(atPath: stateFile)
-                application.terminate(nil)
+    guard let remaining = activeRemaining(), remaining > 0 else {
+        if !finished && readInteger(endFile) != nil {
+            finished = true
+            statusItem.button?.title = "✓"
+            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+                if pausedRemaining() == nil && activeRemaining() == nil {
+                    removeFile(endFile)
+                    application.terminate(nil)
+                }
             }
         }
+        return
     }
+    finished = false
+    statusItem.button?.title = formattedTime(remaining)
 }
 
+controller.refresh()
 application.run()

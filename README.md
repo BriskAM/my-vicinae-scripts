@@ -28,3 +28,6 @@ The scripts use Vicinae's `silent` output mode for HUD feedback.
 The timer script compiles a small native AppKit status-bar helper on first use. Assign
 the **Add 5 Minutes to Timer** command to a Vicinae shortcut such as Hyper+T. Each
 invocation adds five minutes to the existing timer.
+
+Click the running timer in the menu bar for controls to subtract one minute, add five
+minutes, pause/resume, reset, or quit the timer.
