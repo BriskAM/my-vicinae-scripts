@@ -21,5 +21,10 @@ Then run **Reload Script Directories** from Vicinae's root search.
 - OCR a selected screen region to the clipboard
 - Open Downloads, the home folder, or recent downloads
 - Search selected text on Google or open a selected link
+- Add five minutes to a persistent menu-bar timer
 
 The scripts use Vicinae's `silent` output mode for HUD feedback.
+
+The timer script compiles a small native AppKit status-bar helper on first use. Assign
+the **Add 5 Minutes to Timer** command to a Vicinae shortcut such as Hyper+T. Each
+invocation adds five minutes to the existing timer.
