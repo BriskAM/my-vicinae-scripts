@@ -131,13 +131,18 @@ Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
         controller.refresh()
         return
     }
-    guard let remaining = activeRemaining(), remaining > 0 else {
-        if !finished && readInteger(endFile) != nil {
+    guard let end = readInteger(endFile) else {
+        return
+    }
+
+    let remaining = end - now()
+    guard remaining > 0 else {
+        removeFile(endFile)
+        if !finished {
             finished = true
             statusItem.button?.title = "✓"
             DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                if pausedRemaining() == nil && activeRemaining() == nil {
-                    removeFile(endFile)
+                if pausedRemaining() == nil && readInteger(endFile) == nil {
                     application.terminate(nil)
                 }
             }

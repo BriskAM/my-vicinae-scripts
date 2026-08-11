@@ -22,6 +22,7 @@ Then run **Reload Script Directories** from Vicinae's root search.
 - Open Downloads, the home folder, or recent downloads
 - Search selected text on Google or open a selected link
 - Add five minutes to a persistent menu-bar timer
+- Toggle Coffee Mode to keep the Mac awake
 
 The scripts use Vicinae's `silent` output mode for HUD feedback.
 
@@ -31,3 +32,7 @@ invocation adds five minutes to the existing timer.
 
 Click the running timer in the menu bar for controls to subtract one minute, add five
 minutes, pause/resume, reset, or quit the timer.
+
+Assign **Toggle Coffee Mode** to a shortcut such as Hyper+C. When enabled, a native
+Apple SF Symbol (`cup.and.saucer.fill`) appears in the menu bar and `caffeinate` keeps
+the Mac awake. Click the icon to turn Coffee Mode off.
