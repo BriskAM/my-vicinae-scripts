@@ -37,6 +37,7 @@ func activeRemaining() -> Int64? {
 final class TimerMenuController: NSObject {
     let statusItem: NSStatusItem
     let pauseItem: NSMenuItem
+    var finishScheduled = false
 
     init(statusItem: NSStatusItem) {
         self.statusItem = statusItem
@@ -75,12 +76,26 @@ final class TimerMenuController: NSObject {
         }
     }
 
+    func showFinished() {
+        removeFile(endFile)
+        removeFile(pausedFile)
+        guard !finishScheduled else { return }
+
+        finishScheduled = true
+        statusItem.button?.title = "✓"
+        DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
+            if readInteger(endFile) == nil && pausedRemaining() == nil {
+                NSApplication.shared.terminate(nil)
+            }
+        }
+    }
+
     @objc func subtractMinute() {
         if let paused = pausedRemaining() {
-            if paused <= 60 { removeFile(pausedFile) }
+            if paused <= 60 { showFinished(); return }
             else { writeInteger(paused - 60, to: pausedFile) }
         } else if let end = readInteger(endFile) {
-            if end <= now() + 60 { removeFile(endFile) }
+            if end <= now() + 60 { showFinished(); return }
             else { writeInteger(end - 60, to: endFile) }
         }
         refresh()
@@ -123,11 +138,9 @@ let application = NSApplication.shared
 application.setActivationPolicy(.accessory)
 let statusItem = NSStatusBar.system.statusItem(withLength: NSStatusItem.variableLength)
 let controller = TimerMenuController(statusItem: statusItem)
-var finished = false
 
 Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
     if pausedRemaining() != nil {
-        finished = false
         controller.refresh()
         return
     }
@@ -137,19 +150,9 @@ Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
 
     let remaining = end - now()
     guard remaining > 0 else {
-        removeFile(endFile)
-        if !finished {
-            finished = true
-            statusItem.button?.title = "✓"
-            DispatchQueue.main.asyncAfter(deadline: .now() + 3) {
-                if pausedRemaining() == nil && readInteger(endFile) == nil {
-                    application.terminate(nil)
-                }
-            }
-        }
+        controller.showFinished()
         return
     }
-    finished = false
     statusItem.button?.title = formattedTime(remaining)
 }
 

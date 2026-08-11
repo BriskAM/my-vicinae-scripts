@@ -35,4 +35,5 @@ minutes, pause/resume, reset, or quit the timer.
 
 Assign **Toggle Coffee Mode** to a shortcut such as Hyper+C. When enabled, a native
 Apple SF Symbol (`cup.and.saucer.fill`) appears in the menu bar and `caffeinate` keeps
-the Mac awake. Click the icon to turn Coffee Mode off.
+the Mac awake. Click the icon to turn Coffee Mode off; there is intentionally only one
+off action because quitting and turning it off have the same effect.

@@ -23,10 +23,6 @@ final class CoffeeMenuController: NSObject {
         let turnOff = NSMenuItem(title: "Turn Off Coffee Mode", action: #selector(turnOffCoffeeMode), keyEquivalent: "")
         turnOff.target = self
         menu.addItem(turnOff)
-        let quit = NSMenuItem(title: "Quit", action: #selector(quit), keyEquivalent: "")
-        quit.target = self
-        menu.addItem(quit)
-
         statusItem.button?.image = NSImage(systemSymbolName: "cup.and.saucer.fill", accessibilityDescription: "Coffee Mode")
         statusItem.menu = menu
     }
@@ -58,11 +54,6 @@ final class CoffeeMenuController: NSObject {
         NSApplication.shared.terminate(nil)
     }
 
-    @objc func quit() {
-        removeCoffeeState()
-        stopCaffeinate()
-        NSApplication.shared.terminate(nil)
-    }
 }
 
 let application = NSApplication.shared
