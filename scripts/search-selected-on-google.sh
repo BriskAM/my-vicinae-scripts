@@ -20,14 +20,25 @@ sleep 0.3
 # Get clipboard content
 selected_text=$(pbpaste)
 
+# Remove accidental whitespace around the selection.
+selected_text="${selected_text#"${selected_text%%[![:space:]]*}"}"
+selected_text="${selected_text%"${selected_text##*[![:space:]]}"}"
+
 if [ -z "$selected_text" ]; then
     echo "No selected text found"
     exit 0
 fi
 
-# Check if it's a URL
-if echo "$selected_text" | grep -qiE '^(https?://|www\.)'; then
-  if open "$selected_text"; then
+# Open URLs directly; search everything else on Google.
+if [[ "$selected_text" =~ ^https?://[^[:space:]]+$ ]] || \
+   [[ "$selected_text" =~ ^www\.[^[:space:]]+$ ]] || \
+   [[ "$selected_text" =~ ^([[:alnum:]-]+\.)+[[:alpha:]]{2,}(/[^[:space:]]*)?$ ]]; then
+  url="$selected_text"
+  if [[ "$url" != *://* ]]; then
+    url="https://$url"
+  fi
+
+  if open "$url"; then
     echo "Opened selected link"
   else
     echo "Could not open selected link"
