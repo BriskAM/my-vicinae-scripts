@@ -31,7 +31,8 @@ the **Add 5 Minutes to Timer** command to a Vicinae shortcut such as Hyper+T. Ea
 invocation adds five minutes to the existing timer.
 
 Click the running timer in the menu bar for controls to subtract one minute, add five
-minutes, pause/resume, reset, or quit the timer.
+minutes, pause/resume, reset, or quit the timer. While the timer is actively counting,
+it also runs macOS `caffeinate`; pausing, resetting, finishing, or quitting stops it.
 
 Assign **Toggle Coffee Mode** to a shortcut such as Hyper+C. When enabled, a native
 Apple SF Symbol (`cup.and.saucer.fill`) appears in the menu bar and `caffeinate` keeps

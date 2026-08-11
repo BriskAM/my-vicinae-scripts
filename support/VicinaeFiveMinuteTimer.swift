@@ -38,6 +38,7 @@ final class TimerMenuController: NSObject {
     let statusItem: NSStatusItem
     let pauseItem: NSMenuItem
     var finishScheduled = false
+    var caffeinateProcess: Process?
 
     init(statusItem: NSStatusItem) {
         self.statusItem = statusItem
@@ -63,20 +64,53 @@ final class TimerMenuController: NSObject {
         return item
     }
 
+    func startCaffeinateIfNeeded() {
+        guard caffeinateProcess?.isRunning != true else { return }
+
+        let process = Process()
+        process.executableURL = URL(fileURLWithPath: "/usr/bin/caffeinate")
+        process.arguments = ["-dimsu"]
+        process.standardInput = FileHandle.nullDevice
+        process.standardOutput = FileHandle.nullDevice
+        process.standardError = FileHandle.nullDevice
+
+        do {
+            try process.run()
+            caffeinateProcess = process
+        } catch {
+            caffeinateProcess = nil
+        }
+    }
+
+    func stopCaffeinate() {
+        if let process = caffeinateProcess, process.isRunning {
+            process.terminate()
+        }
+        caffeinateProcess = nil
+    }
+
+    deinit {
+        stopCaffeinate()
+    }
+
     func refresh() {
         if let paused = pausedRemaining() {
+            stopCaffeinate()
             statusItem.button?.title = "⏸ \(formattedTime(paused))"
             pauseItem.title = "Resume"
         } else if let remaining = activeRemaining(), remaining > 0 {
+            startCaffeinateIfNeeded()
             statusItem.button?.title = formattedTime(remaining)
             pauseItem.title = "Pause"
         } else {
+            stopCaffeinate()
             statusItem.button?.title = "—"
             pauseItem.title = "Pause"
         }
     }
 
     func showFinished() {
+        stopCaffeinate()
         removeFile(endFile)
         removeFile(pausedFile)
         guard !finishScheduled else { return }
@@ -122,12 +156,14 @@ final class TimerMenuController: NSObject {
     }
 
     @objc func resetTimer() {
+        stopCaffeinate()
         removeFile(endFile)
         removeFile(pausedFile)
         refresh()
     }
 
     @objc func quitTimer() {
+        stopCaffeinate()
         removeFile(endFile)
         removeFile(pausedFile)
         NSApplication.shared.terminate(nil)
@@ -145,6 +181,7 @@ Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
         return
     }
     guard let end = readInteger(endFile) else {
+        controller.stopCaffeinate()
         return
     }
 
@@ -153,6 +190,7 @@ Timer.scheduledTimer(withTimeInterval: 0.25, repeats: true) { _ in
         controller.showFinished()
         return
     }
+    controller.startCaffeinateIfNeeded()
     statusItem.button?.title = formattedTime(remaining)
 }
 
