@@ -7,7 +7,7 @@
 
 set -euo pipefail
 
-label_index=6
+label_index=2
 
 result=$(osascript - "$label_index" <<'APPLESCRIPT'
 on run argv
@@ -15,10 +15,17 @@ on run argv
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) is 0 then return "NO_SELECTION"
+        removedCount to 0
         repeat with selectedItem in selectedItems
-            set label index of selectedItem to labelIndex
+            if (label index of selectedItem) is labelIndex then
+                set label index of selectedItem to 0
+                set removedCount to removedCount + 1
+            else
+                set label index of selectedItem to labelIndex
+            end if
         end repeat
-        return (count of selectedItems) as text
+        if removedCount is (count of selectedItems) then return "REMOVED"
+        return "MARKED"
     end tell
 end run
 APPLESCRIPT
@@ -27,5 +34,5 @@ APPLESCRIPT
 if [ "$result" = "NO_SELECTION" ]; then
     echo "No file or folder selected in Finder"
 else
-    echo "Marked $result item(s) red"
+    if [ "$result" = "REMOVED" ]; then echo "Removed red tag"; else echo "Marked selected item(s) red"; fi
 fi

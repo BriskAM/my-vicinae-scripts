@@ -15,10 +15,17 @@ on run argv
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) is 0 then return "NO_SELECTION"
+        removedCount to 0
         repeat with selectedItem in selectedItems
-            set label index of selectedItem to labelIndex
+            if (label index of selectedItem) is labelIndex then
+                set label index of selectedItem to 0
+                set removedCount to removedCount + 1
+            else
+                set label index of selectedItem to labelIndex
+            end if
         end repeat
-        return (count of selectedItems) as text
+        if removedCount is (count of selectedItems) then return "REMOVED"
+        return "MARKED"
     end tell
 end run
 APPLESCRIPT
@@ -27,5 +34,5 @@ APPLESCRIPT
 if [ "$result" = "NO_SELECTION" ]; then
     echo "No file or folder selected in Finder"
 else
-    echo "Marked $result item(s) blue"
+    if [ "$result" = "REMOVED" ]; then echo "Removed blue tag"; else echo "Marked selected item(s) blue"; fi
 fi
