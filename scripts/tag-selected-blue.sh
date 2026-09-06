@@ -2,7 +2,7 @@
 
 # @vicinae.schemaVersion 1
 # @vicinae.title Tag Selected Blue
-# @vicinae.mode compact
+# @vicinae.mode silent
 # @vicinae.keywords ["finder", "tag", "blue", "label"]
 
 set -euo pipefail

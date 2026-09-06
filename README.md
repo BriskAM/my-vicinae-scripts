@@ -27,8 +27,8 @@ Then run **Reload Script Directories** from Vicinae's root search.
 
 The scripts use Vicinae's `silent` output mode for HUD feedback.
 
-The Finder label commands use Vicinae's `compact` mode for toast feedback and apply
-the color to every currently selected Finder item.
+The Finder label commands use Vicinae's `silent` mode for HUD feedback and apply the
+color to every currently selected Finder item.
 
 The timer script compiles a small native AppKit status-bar helper on first use. Assign
 the **Add 5 Minutes to Timer** command to a Vicinae shortcut such as Hyper+T. Each
