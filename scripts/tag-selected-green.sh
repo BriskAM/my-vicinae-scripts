@@ -15,7 +15,7 @@ on run argv
     tell application "Finder"
         set selectedItems to selection
         if (count of selectedItems) is 0 then return "NO_SELECTION"
-        removedCount to 0
+        set removedCount to 0
         repeat with selectedItem in selectedItems
             if (label index of selectedItem) is labelIndex then
                 set label index of selectedItem to 0
