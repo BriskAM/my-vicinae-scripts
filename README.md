@@ -21,10 +21,14 @@ Then run **Reload Script Directories** from Vicinae's root search.
 - OCR a selected screen region to the clipboard
 - Open Downloads, the home folder, or recent downloads
 - Search selected text on Google or open a selected link
+- Apply Red, Blue, or Green Finder labels to selected items
 - Add five minutes to a persistent menu-bar timer
 - Toggle Coffee Mode to keep the Mac awake
 
 The scripts use Vicinae's `silent` output mode for HUD feedback.
+
+The Finder label commands use Vicinae's `compact` mode for toast feedback and apply
+the color to every currently selected Finder item.
 
 The timer script compiles a small native AppKit status-bar helper on first use. Assign
 the **Add 5 Minutes to Timer** command to a Vicinae shortcut such as Hyper+T. Each
